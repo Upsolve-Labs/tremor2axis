@@ -22,7 +22,7 @@ interface BaseChartProps extends BaseAnimationTimingProps, React.HTMLAttributes<
   startEndOnly?: boolean;
   showXAxis?: boolean;
   showYAxis?: boolean;
-  yAxisWidth?: number;
+  yAxisWidth?: number | "auto";
   intervalType?: IntervalType;
   showTooltip?: boolean;
   showLegend?: boolean;
