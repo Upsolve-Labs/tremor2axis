@@ -21,8 +21,10 @@ import NoData from "../common/NoData";
 import {
   constructCategoryColors,
   getYAxisDomain,
+  getYAxisWidth,
   hasOnlyOneValueForThisKey,
 } from "../common/utils";
+import ChartYTick from "../common/ChartYTick";
 
 import {
   BaseColors,
@@ -58,7 +60,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>((props, ref) 
     startEndOnly = false,
     showXAxis = true,
     showYAxis = true,
-    yAxisWidth = 56,
+    yAxisWidth = "auto",
     intervalType = "equidistantPreserveStart",
     showAnimation = false,
     animationDuration = 900,
@@ -85,11 +87,16 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>((props, ref) 
   const CustomTooltip = customTooltip;
   const paddingValue = (!showXAxis && !showYAxis) || (startEndOnly && !showYAxis) ? 0 : 20;
   const [legendHeight, setLegendHeight] = useState(60);
+  const [widestTick, setWidestTick] = useState<number | undefined>(undefined);
   const [activeDot, setActiveDot] = useState<ActiveDot | undefined>(undefined);
   const [activeLegend, setActiveLegend] = useState<string | undefined>(undefined);
   const categoryColors = constructCategoryColors(categories, colors);
 
   const yAxisDomain = getYAxisDomain(autoMinValue, minValue, maxValue);
+  const calculatedYAxisWidth = getYAxisWidth(
+    yAxisWidth,
+    widestTick ? valueFormatter(widestTick) : undefined,
+  );
   const hasOnValueChange = !!onValueChange;
 
   function onDotClick(itemData: any, event: React.MouseEvent) {
@@ -193,20 +200,19 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>((props, ref) 
             {orientations ? (
               categories.map((_, idx) => (
                 <YAxis
-                  width={yAxisWidth}
+                  width={calculatedYAxisWidth}
                   hide={!showYAxis}
                   axisLine={false}
                   tickLine={false}
                   type="number"
                   domain={yAxisDomain as AxisDomain}
-                  tick={{
-                    transform: `translate(${orientations[idx] === "right" ? 3 : -3}, 0)`,
-                  }}
+                  tick={(props: any) => <ChartYTick {...props} setWidestTick={setWidestTick} />}
                   fill=""
                   stroke=""
                   className={tremorTwMerge(
                     // common
                     "text-tremor-label",
+                    "whitespace-nowrap",
                     // light
                     "fill-tremor-content",
                     // dark
@@ -221,13 +227,13 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>((props, ref) 
               ))
             ) : (
               <YAxis
-                width={yAxisWidth}
+                width={calculatedYAxisWidth}
                 hide={!showYAxis}
                 axisLine={false}
                 tickLine={false}
                 type="number"
                 domain={yAxisDomain as AxisDomain}
-                tick={{ transform: "translate(-3, 0)" }}
+                tick={(props: any) => <ChartYTick {...props} setWidestTick={setWidestTick} />}
                 fill=""
                 stroke=""
                 className={tremorTwMerge(

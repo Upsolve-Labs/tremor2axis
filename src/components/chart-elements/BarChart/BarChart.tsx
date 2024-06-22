@@ -17,8 +17,8 @@ import BaseChartProps from "../common/BaseChartProps";
 import ChartLegend from "../common/ChartLegend";
 import ChartTooltip from "../common/ChartTooltip";
 import NoData from "../common/NoData";
-import { constructCategoryColors, deepEqual, getYAxisDomain } from "../common/utils";
-
+import { constructCategoryColors, deepEqual, getYAxisDomain, getYAxisWidth } from "../common/utils";
+import ChartYTick from "../common/ChartYTick";
 import { BaseColors, defaultValueFormatter, themeColorRange } from "lib";
 import { AxisDomain } from "recharts/types/util/types";
 
@@ -78,7 +78,7 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>((props, ref) =>
     showAnimation = false,
     showXAxis = true,
     showYAxis = true,
-    yAxisWidth = 56,
+    yAxisWidth = "auto",
     intervalType = "equidistantPreserveStart",
     showTooltip = true,
     showLegend = true,
@@ -100,6 +100,7 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>((props, ref) =>
   const CustomTooltip = customTooltip;
   const paddingValue = !showXAxis && !showYAxis ? 0 : 20;
   const [legendHeight, setLegendHeight] = useState(60);
+  const [widestTick, setWidestTick] = useState<number | undefined>(undefined);
   const categoryColors = constructCategoryColors(categories, colors);
   const [activeBar, setActiveBar] = React.useState<any | undefined>(undefined);
   const [activeLegend, setActiveLegend] = useState<string | undefined>(undefined);
@@ -141,9 +142,18 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>((props, ref) =>
     setActiveBar(undefined);
   }
   const yAxisDomain = getYAxisDomain(autoMinValue, minValue, maxValue);
+  const calculatedYAxisWidth = getYAxisWidth(
+    yAxisWidth,
+    widestTick
+      ? relative
+        ? `${(widestTick * 100).toString()} %`
+        : valueFormatter(widestTick)
+      : undefined,
+  );
 
   return (
     <div ref={ref} className={tremorTwMerge("w-full h-80", className)} {...other}>
+      <span>{valueFormatter(widestTick ?? 0)}</span>
       <ResponsiveContainer className="h-full w-full">
         {data?.length ? (
           <ReChartsBarChart
@@ -229,13 +239,13 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>((props, ref) =>
             )}
             {layout !== "vertical" ? (
               <YAxis
-                width={yAxisWidth}
+                width={calculatedYAxisWidth}
                 hide={!showYAxis}
                 axisLine={false}
                 tickLine={false}
                 type="number"
                 domain={yAxisDomain as AxisDomain}
-                tick={{ transform: "translate(-3, 0)" }}
+                tick={(props: any) => <ChartYTick {...props} setWidestTick={setWidestTick} />}
                 fill=""
                 stroke=""
                 className={tremorTwMerge(
@@ -253,7 +263,7 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>((props, ref) =>
               />
             ) : (
               <YAxis
-                width={yAxisWidth}
+                width={calculatedYAxisWidth}
                 hide={!showYAxis}
                 dataKey={index}
                 axisLine={false}
@@ -261,12 +271,13 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>((props, ref) =>
                 ticks={startEndOnly ? [data[0][index], data[data.length - 1][index]] : undefined}
                 type="category"
                 interval="preserveStartEnd"
-                tick={{ transform: "translate(0, 6)" }}
+                tick={(props: any) => <ChartYTick {...props} setWidestTick={setWidestTick} />}
                 fill=""
                 stroke=""
                 className={tremorTwMerge(
                   // common
                   "text-tremor-label",
+                  "whitespace-nowrap",
                   // light
                   "fill-tremor-content",
                   // dark
